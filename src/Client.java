@@ -5,7 +5,9 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -17,6 +19,8 @@ import java.util.LinkedList;
 import java.util.List;
 //import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+//import com.google.gson.JsonSyntaxException;
 
 
 public class Client extends Application {
@@ -95,7 +99,7 @@ public class Client extends Application {
         scene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.RIGHT) {
                 if (columnaActual < COLUMNAS - 1) {
-                    System.out.println("Mover hacia la derecha");
+                    //System.out.println("Mover hacia la derecha");
                     puntos.get(filaActual).get(columnaActual).setOpacity(1.0); // Restaurar opacidad del punto anterior
                     columnaActual++;
                     puntos.get(filaActual).get(columnaActual).setOpacity(0.5); // Cambiar opacidad del punto actual
@@ -103,7 +107,7 @@ public class Client extends Application {
             }
             } else if (event.getCode() == KeyCode.LEFT) {
                 if (columnaActual > 0) {
-                    System.out.println("Mover hacia la izquierda");
+                    //System.out.println("Mover hacia la izquierda");
                     puntos.get(filaActual).get(columnaActual).setOpacity(1.0);
                     columnaActual--;
                     puntos.get(filaActual).get(columnaActual).setOpacity(0.5);
@@ -111,7 +115,7 @@ public class Client extends Application {
             }
             } else if (event.getCode() == KeyCode.UP) {
                 if (filaActual > 0) {
-                    System.out.println("Mover hacia arriba");
+                    //System.out.println("Mover hacia arriba");
                     puntos.get(filaActual).get(columnaActual).setOpacity(1.0);
                     filaActual--;
                     puntos.get(filaActual).get(columnaActual).setOpacity(0.5);
@@ -119,7 +123,7 @@ public class Client extends Application {
                 } 
             } else if (event.getCode() == KeyCode.DOWN) {
                 if (filaActual < FILAS - 1) {
-                    System.out.println("Mover hacia abajo");   
+                    //System.out.println("Mover hacia abajo");   
                     puntos.get(filaActual).get(columnaActual).setOpacity(1.0);
                     filaActual++;
                     puntos.get(filaActual).get(columnaActual).setOpacity(0.5);
@@ -169,25 +173,24 @@ public class Client extends Application {
         out.println(message);
     }*/
 
-    private void readMessages() { //Leer mensajes 
+    private void readMessages() {
         try {
             Scanner in = new Scanner(socket.getInputStream());
             while (in.hasNextLine()) {
                 String message = in.nextLine();
                 Platform.runLater(() -> {
-                    if (message.startsWith("MALLA")) {
-                        //updatePointGrid(message);
-                    } 
-                    else if (message.startsWith("NOMBRES")) { //Nombra los jugadores en pantalla 
-                        String[] nombres = message.split(" ");
-                        if (nombres.length >= 5) {
-                            jugador1Label.setText("Jugador 1: " + nombres[1]);
-                            jugador2Label.setText("Jugador 2: " + nombres[2]);
-                            jugador3Label.setText("Jugador 3: " + nombres[3]);
-                            jugador4Label.setText("Jugador 4: " + nombres[4]);
-                        }
-                    } 
-                    else {
+                    if (message.startsWith("{\"accion\":\"dibujarLinea\"")) {
+                        JsonObject lineaJSON = JsonParser.parseString(message).getAsJsonObject();
+                        int fila1 = lineaJSON.get("fila1").getAsInt();
+                        int columna1 = lineaJSON.get("columna1").getAsInt();
+                        int fila2 = lineaJSON.get("fila2").getAsInt();
+                        int columna2 = lineaJSON.get("columna2").getAsInt();
+    
+                        // Llama al método para dibujar la línea entre los puntos (fila1, columna1) y (fila2, columna2)
+                        dibujarLinea(fila1, columna1, fila2, columna2);
+    
+                        System.out.println("Recibido mensaje 'dibujarLinea': (" + fila1 + "," + columna1 + ") - (" + fila2 + "," + columna2 + ")");
+                    } else {
                         EspMensajes.appendText(message + "\n");
                     }
                 });
@@ -196,6 +199,7 @@ public class Client extends Application {
             e.printStackTrace();
         }
     }
+    
 
     private void dibujarMatriz(Group roote) {
         double espacioX = 400.0 / COLUMNAS;
@@ -241,4 +245,22 @@ public class Client extends Application {
             columnaSeleccionada2 = -1;
         }
     }
+
+    private void dibujarLinea(int fila1, int columna1, int fila2, int columna2) {
+    // Calcula las coordenadas de los puntos en la matriz
+    double x1 = columna1 * (400.0 / COLUMNAS) + 50;
+    double y1 = fila1 * (400.0 / FILAS) + 50;
+    double x2 = columna2 * (400.0 / COLUMNAS) + 50;
+    double y2 = fila2 * (400.0 / FILAS) + 50;
+
+    // Crea una línea que conecta los dos puntos
+    Line linea = new Line(x1, y1, x2, y2);
+
+    // Puedes personalizar el estilo de la línea aquí, por ejemplo:
+    linea.setStroke(Color.RED); // Cambia el color de la línea
+
+    // Agrega la línea al Group roote
+    roote.getChildren().add(linea);
+}
+
 }

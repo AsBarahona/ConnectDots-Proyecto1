@@ -8,6 +8,9 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.google.gson.JsonObject; // En el servidor
+import com.google.gson.JsonParser;
+
 public class Server {
     private static Queue<String> usuariosEnCola = new LinkedList<>(); //Creada para "rastrear" el nombre de usuario
     private static Queue<PrintWriter> clientesQueue = new LinkedList<>(); //Creada para "rastrear" las conexiones de cada cliente
@@ -74,13 +77,38 @@ public class Server {
 
                         printUserQueue(); // Imprimir la lista de usuarios en la cola
 
-                        while (true) { //Envia como broadcast los usuarios de cada cliente a los demás
+                        /*while (true) { //Envia como broadcast los usuarios de cada cliente a los demás
                             String message = in.nextLine();
                             if (((LinkedList<PrintWriter>) clientesQueue).get(turnoActual) == out) {
                                 broadcast(nombreUsuario + ": " + message);
                                 turnoActual = (turnoActual + 1) % clientesQueue.size();
                             }
+                        }*/
+
+                        while (true) {
+                            String message = in.nextLine();
+                            if (((LinkedList<PrintWriter>) clientesQueue).get(turnoActual) == out) {
+                                JsonObject coordenadasJSON = JsonParser.parseString(message).getAsJsonObject();
+                                int fila1 = coordenadasJSON.get("fila1").getAsInt();
+                                int columna1 = coordenadasJSON.get("columna1").getAsInt();
+                                int fila2 = coordenadasJSON.get("fila2").getAsInt();
+                                int columna2 = coordenadasJSON.get("columna2").getAsInt();
+                                
+                                if (sonPuntosContinuos(fila1, columna1, fila2, columna2)) {
+                                    // Si los puntos son continuos, envía la información para dibujar la línea
+                                    JsonObject lineaJSON = new JsonObject();
+                                    lineaJSON.addProperty("accion", "dibujarLinea");
+                                    lineaJSON.addProperty("fila1", fila1);
+                                    lineaJSON.addProperty("columna1", columna1);
+                                    lineaJSON.addProperty("fila2", fila2);
+                                    lineaJSON.addProperty("columna2", columna2);
+                                    
+                                    broadcast(lineaJSON.toString());
+                                }
+                                turnoActual = (turnoActual + 1) % clientesQueue.size();
+                            }
                         }
+
                     } else { //Mensaje cuando ya se alcanzó el máximo de clientes
                         out.println("Número máximo de clientes alcanzado. Intente más tarde.");
                         socket.close(); 
@@ -115,6 +143,14 @@ public class Server {
                 System.out.println(usuario);
             }
         }
+
+        private boolean sonPuntosContinuos(int fila1, int columna1, int fila2, int columna2) { // Verifica si los puntos son adyacentes en horizontal o vertical
+            if (Math.abs(fila1 - fila2) <= 1 && Math.abs(columna1 - columna2) <= 1) {
+                return true;
+            }
+            return false;
+        }
+        
     }
 }
 
