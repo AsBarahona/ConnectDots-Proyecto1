@@ -84,6 +84,7 @@ public class Server {
                         while (true) {
                             String message = in.nextLine();
                             if (((LinkedList<PrintWriter>) clientesQueue).get(turnoActual) == out) {
+                                System.out.println(turnoActual);
                                 JsonObject coordenadasJSON = JsonParser.parseString(message).getAsJsonObject();
                                 int fila1 = coordenadasJSON.get("fila1").getAsInt();
                                 int columna1 = coordenadasJSON.get("columna1").getAsInt();
@@ -91,9 +92,6 @@ public class Server {
                                 int columna2 = coordenadasJSON.get("columna2").getAsInt();
 
                                 if (sonPuntosContinuos(fila1, columna1, fila2, columna2)) {
-                                    //puntosSeleccionados.add(new Point(fila1, columna1));
-                                    //puntosSeleccionados.add(new Point(fila2, columna2));
-                                  //imprimirPuntosSeleccionados();
                                     if(fila1==fila2){
                                         int primY, secY;
 
@@ -105,7 +103,7 @@ public class Server {
                                             primY = columna2;
                                         }
                                         conexiones.add(new Edge(new Point(fila1, primY), new Point(fila1, secY)));
-                                        if (verificarCuadrado(fila1, primY, fila1, secY)) {
+                                        if (verificarCuadrado(fila1, primY, fila1, secY)!="Nocuadros") {
                                         JsonObject lineaJSON = new JsonObject();
                                         lineaJSON.addProperty("accion", "dibujarLinea");
                                         lineaJSON.addProperty("fila1", fila1);
@@ -113,8 +111,10 @@ public class Server {
                                         lineaJSON.addProperty("fila2", fila2);
                                         lineaJSON.addProperty("columna2", columna2);
                                         broadcast(lineaJSON.toString());
-                                        System.out.println("Cuadrado"); 
-                                        //broadcast(cuadradoJSON.toString());
+                                        //System.out.println("Cuadradooo"); 
+                                      
+                                        broadcast(verificarCuadrado(fila1, primY, fila1, secY));
+
                                     } else {
                                         // Si no cierra un cuadrado, envía la información para dibujar la línea
                                         JsonObject lineaJSON = new JsonObject();
@@ -139,7 +139,7 @@ public class Server {
                                             primX = fila2;
                                         }
                                         conexiones.add(new Edge(new Point(primX, columna1), new Point(secX, columna1)));
-                                        if (verificarCuadrado(primX, columna1, secX,columna2)){
+                                        if (verificarCuadrado(primX, columna1, secX,columna2)!="Nocuadros"){
                                             JsonObject lineaJSON = new JsonObject();
                                         lineaJSON.addProperty("accion", "dibujarLinea");
                                         lineaJSON.addProperty("fila1", fila1);
@@ -147,6 +147,7 @@ public class Server {
                                         lineaJSON.addProperty("fila2", fila2);
                                         lineaJSON.addProperty("columna2", columna2);
                                         broadcast(lineaJSON.toString());
+                                        broadcast(verificarCuadrado(primX, columna1, secX, columna1));
                                         System.out.println("Cuadrado"); 
                                         //broadcast(cuadradoJSON.toString());
                                         } else {
@@ -210,7 +211,7 @@ public class Server {
         }
 
 
-        private boolean verificarCuadrado(int fila, int columna, int fila2, int columna2) {
+        private String verificarCuadrado(int fila, int columna, int fila2, int columna2) {
             // Verificar si se forma un cuadrado alrededor del punto dado (fila, columna)
 
             Point puntoArriba = new Point(fila - 1, columna);
@@ -229,32 +230,76 @@ public class Server {
                 conexiones.contains(new Edge(puntoAbajo, puntoAbajoDerecha)) &&
                 conexiones.contains(new Edge(new Point(fila2,columna2), puntoAbajoDerecha)) &&
                 conexiones.contains(new Edge((new Point(fila,columna)), puntoAbajo))){
-                    return true; 
+                    JsonObject letraJSON = new JsonObject();
+                    letraJSON.addProperty("accion", "dibujarLetra");
+                    letraJSON.addProperty("fila1", fila);
+                    letraJSON.addProperty("columna1", columna);
+                    letraJSON.addProperty("fila2", fila);
+                    letraJSON.addProperty("columna2", columna+1);
+                    letraJSON.addProperty("fila3", fila2);
+                    letraJSON.addProperty("columna3", columna2);
+                    letraJSON.addProperty("fila4", fila2);
+                    letraJSON.addProperty("columna4", columna2+1);
+                    letraJSON.addProperty("letra", turnoActual+1);
+                    return (letraJSON.toString()); 
                 } else if(conexiones.contains(new Edge((new Point(fila,columna)),(new Point(fila2,columna2)))) &&
                 conexiones.contains(new Edge(puntoArriba, puntoArribaDerecha)) &&
                 conexiones.contains(new Edge(puntoArriba,(new Point(fila,columna)))) &&
                 conexiones.contains(new Edge(puntoArribaDerecha, (new Point(fila2,columna2))))){
-                    return true;
+                    JsonObject letraJSON = new JsonObject();
+                    letraJSON.addProperty("accion", "dibujarLetra");
+                    letraJSON.addProperty("fila1", fila-1);
+                    letraJSON.addProperty("columna1", columna);
+                    letraJSON.addProperty("fila2", fila2-1);
+                    letraJSON.addProperty("columna2", columna2);
+                    letraJSON.addProperty("fila3", fila);
+                    letraJSON.addProperty("columna3", columna);
+                    letraJSON.addProperty("fila4", fila2);
+                    letraJSON.addProperty("columna4", columna2);
+                    letraJSON.addProperty("letra", turnoActual+1);
+                    return (letraJSON.toString()); 
                 } else{
-                    return false;
+                    return "Nocuadros";
                 }
             }else if (columna==columna2){
                 if (conexiones.contains(new Edge((new Point(fila,columna)),(new Point(fila2,columna2)))) &&
                 conexiones.contains(new Edge(puntoIzquierda, puntoAbajoIzquierda)) &&
                 conexiones.contains(new Edge(puntoIzquierda, (new Point(fila,columna)))) &&
                 conexiones.contains(new Edge(puntoAbajoIzquierda, (new Point(fila2,columna2))))) {
-                    return true; 
+                    JsonObject letraJSON = new JsonObject();
+                    letraJSON.addProperty("accion", "dibujarLetra");
+                    letraJSON.addProperty("fila1", fila);
+                    letraJSON.addProperty("columna1", columna-1);
+                    letraJSON.addProperty("fila2", fila);
+                    letraJSON.addProperty("columna2", columna);
+                    letraJSON.addProperty("fila3", fila2);
+                    letraJSON.addProperty("columna3", columna2-1);
+                    letraJSON.addProperty("fila4", fila2);
+                    letraJSON.addProperty("columna4", columna2+1);
+                    letraJSON.addProperty("letra", turnoActual+1);
+                    return (letraJSON.toString()); 
                 } else if(conexiones.contains(new Edge((new Point(fila,columna)),(new Point(fila2,columna2)))) &&
                 conexiones.contains(new Edge(puntoDerecha, puntoAbajoDerecha)) &&
                 conexiones.contains(new Edge((new Point(fila,columna)), puntoDerecha)) &&
                 conexiones.contains(new Edge((new Point(fila2,columna2)), puntoAbajoDerecha))){
-                    return true;
+                    JsonObject letraJSON = new JsonObject();
+                    letraJSON.addProperty("accion", "dibujarLetra");
+                    letraJSON.addProperty("fila1", fila);
+                    letraJSON.addProperty("columna1", columna);
+                    letraJSON.addProperty("fila2", fila);
+                    letraJSON.addProperty("columna2", columna+1);
+                    letraJSON.addProperty("fila3", fila2);
+                    letraJSON.addProperty("columna3", columna2);
+                    letraJSON.addProperty("fila4", fila2);
+                    letraJSON.addProperty("columna4", columna2-1);
+                    letraJSON.addProperty("letra", turnoActual+1);
+                    return (letraJSON.toString()); 
                 } else{
-                    return false;
+                    return "Nocuadros";
                 
                 }
             } else{
-                return false; 
+                return "Nocuadros"; 
             }
         }
     }
