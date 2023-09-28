@@ -22,6 +22,7 @@ public class Server {
     private static int numjugador = 1; // Contador para asignar el número de jugador de cada cliente 
     private static int turnoActual = 0;
     private static Set<Point> puntosSeleccionados = new HashSet<>(); //Controla los puntos continuos de las jugadas
+    private static Set<Edge> conexiones = new HashSet<>();
 
     public static void main(String[] args) {
         ServerSocket serverSocket = null; // Declarar aquí para poder cerrarlo en el finally
@@ -81,14 +82,6 @@ public class Server {
 
                         printUserQueue(); // Imprimir la lista de usuarios en la cola
 
-                        /*while (true) { //Envia como broadcast los usuarios de cada cliente a los demás
-                            String message = in.nextLine();
-                            if (((LinkedList<PrintWriter>) clientesQueue).get(turnoActual) == out) {
-                                broadcast(nombreUsuario + ": " + message);
-                                turnoActual = (turnoActual + 1) % clientesQueue.size();
-                            }
-                        }*/
-
                         while (true) {
                             String message = in.nextLine();
                             if (((LinkedList<PrintWriter>) clientesQueue).get(turnoActual) == out) {
@@ -97,19 +90,23 @@ public class Server {
                                 int columna1 = coordenadasJSON.get("columna1").getAsInt();
                                 int fila2 = coordenadasJSON.get("fila2").getAsInt();
                                 int columna2 = coordenadasJSON.get("columna2").getAsInt();
-                                
+
                                 if (sonPuntosContinuos(fila1, columna1, fila2, columna2)) {
-                                    puntosSeleccionados.add(new Point(fila1, columna1));
-                                    puntosSeleccionados.add(new Point(fila2, columna2));
-                                    if (verificarCuadrado(fila1, columna1, fila2, columna2)) {
-                                        // Si cierra un cuadrado, envía información para dibujar el cuadrado y asignar el número de jugador
-                                        /*JsonObject cuadradoJSON = new JsonObject();
-                                        cuadradoJSON.addProperty("accion", "dibujarCuadrado");
-                                        cuadradoJSON.addProperty("fila1", fila1);
-                                        cuadradoJSON.addProperty("columna1", columna1);
-                                        cuadradoJSON.addProperty("fila2", fila2);
-                                        cuadradoJSON.addProperty("columna2", columna2);
-                                        cuadradoJSON.addProperty("jugador", numjugador);*/
+                                    //puntosSeleccionados.add(new Point(fila1, columna1));
+                                    //puntosSeleccionados.add(new Point(fila2, columna2));
+                                  //imprimirPuntosSeleccionados();
+                                    if(fila1==fila2){
+                                        int primY, secY;
+
+                                        if (columna1 < columna2) {
+                                            secY=columna2;
+                                            primY = columna1;
+                                        } else {
+                                            secY=columna1;
+                                            primY = columna2;
+                                        }
+                                        conexiones.add(new Edge(new Point(fila1, primY), new Point(fila1, secY)));
+                                        if (verificarCuadrado(fila1, columna1)) {
                                         JsonObject lineaJSON = new JsonObject();
                                         lineaJSON.addProperty("accion", "dibujarLinea");
                                         lineaJSON.addProperty("fila1", fila1);
@@ -119,9 +116,6 @@ public class Server {
                                         broadcast(lineaJSON.toString());
                                         System.out.println("Cuadrado"); 
                                         //broadcast(cuadradoJSON.toString());
-                                
-                                        // También puedes agregar código para asignar el número de jugador al centro del cuadrado
-                                        // y llevar un seguimiento de los cuadrados completados por cada jugador
                                     } else {
                                         // Si no cierra un cuadrado, envía la información para dibujar la línea
                                         JsonObject lineaJSON = new JsonObject();
@@ -132,6 +126,42 @@ public class Server {
                                         lineaJSON.addProperty("columna2", columna2);
                                 
                                         broadcast(lineaJSON.toString());
+
+                                        }
+                                    }
+                                    else{
+                                          int primX, secX;
+
+                                        if (fila1 < fila2) {
+                                            secX=fila2;
+                                            primX = fila1;
+                                        } else {
+                                            secX=fila1;
+                                            primX = fila2;
+                                        }
+                                        conexiones.add(new Edge(new Point(primX, columna1), new Point(secX, columna1)));
+                                        if (verificarCuadrado(fila1, columna1)) {
+                                            JsonObject lineaJSON = new JsonObject();
+                                        lineaJSON.addProperty("accion", "dibujarLinea");
+                                        lineaJSON.addProperty("fila1", fila1);
+                                        lineaJSON.addProperty("columna1", columna1);
+                                        lineaJSON.addProperty("fila2", fila2);
+                                        lineaJSON.addProperty("columna2", columna2);
+                                        broadcast(lineaJSON.toString());
+                                        System.out.println("Cuadrado"); 
+                                        //broadcast(cuadradoJSON.toString());
+                                        } else {
+                                            // Si no cierra un cuadrado, envía la información para dibujar la línea
+                                            JsonObject lineaJSON = new JsonObject();
+                                            lineaJSON.addProperty("accion", "dibujarLinea");
+                                            lineaJSON.addProperty("fila1", fila1);
+                                            lineaJSON.addProperty("columna1", columna1);
+                                            lineaJSON.addProperty("fila2", fila2);
+                                            lineaJSON.addProperty("columna2", columna2);
+                                    
+                                            broadcast(lineaJSON.toString());
+
+                                            }
                                     }
                                 }
                                 turnoActual = (turnoActual + 1) % clientesQueue.size();
@@ -180,7 +210,7 @@ public class Server {
             return false;
         }
 
-        private boolean verificarCuadrado(int fila1, int columna1, int fila2, int columna2) {
+        /*private boolean verificarCuadrado(int fila1, int columna1, int fila2, int columna2) {
             // Ordena las coordenadas para asegurarse de que fila1 <= fila2 y columna1 <= columna2
             if (fila1 == fila2){ //Horizontal 
                 int filaDA = fila1+1;
@@ -232,7 +262,75 @@ public class Server {
             }
             return false;
             
-        }
+        }*/
+
+private boolean verificarCuadrado(int fila, int columna) {
+    // Verificar si se forma un cuadrado alrededor del punto dado (fila, columna)
+
+    // Verificar hacia arriba
+    Point puntoArriba = new Point(fila - 1, columna);
+    Point puntoArribaIzquierda = new Point(fila - 1, columna - 1);
+    Point puntoArribaDerecha = new Point(fila - 1, columna + 1);
+
+    // Verificar hacia abajo
+    Point puntoAbajo = new Point(fila + 1, columna);
+    Point puntoAbajoIzquierda = new Point(fila + 1, columna - 1);
+    Point puntoAbajoDerecha = new Point(fila + 1, columna + 1);
+
+    // Verificar hacia la izquierda
+    Point puntoIzquierda = new Point(fila, columna - 1);
+
+    // Verificar hacia la derecha
+    Point puntoDerecha = new Point(fila, columna + 1);
+    if (conexiones.contains(new Edge(puntoArribaIzquierda,puntoArriba)) &&
+           conexiones.contains(new Edge(puntoIzquierda, (new Point(fila,columna)))) &&
+           conexiones.contains(new Edge(puntoArriba, (new Point(fila,columna)))) &&
+           conexiones.contains(new Edge(puntoArribaIzquierda, puntoIzquierda))) {
+            return true; 
+    }else if(conexiones.contains(new Edge(puntoArriba,puntoArribaDerecha)) &&
+           conexiones.contains(new Edge((new Point(fila,columna)), puntoDerecha)) &&
+           conexiones.contains(new Edge(puntoArriba, (new Point(fila,columna)))) &&
+           conexiones.contains(new Edge(puntoArribaDerecha, puntoDerecha))){
+            return true; 
+    }else if(conexiones.contains(new Edge(puntoIzquierda,(new Point(fila,columna)))) &&
+           conexiones.contains(new Edge(puntoAbajoIzquierda, puntoAbajo)) &&
+           conexiones.contains(new Edge(puntoIzquierda, puntoAbajoIzquierda)) &&
+           conexiones.contains(new Edge((new Point(fila,columna)), puntoAbajo))){
+            return true; 
+    }else if(conexiones.contains(new Edge((new Point(fila,columna)),puntoDerecha)) &&
+           conexiones.contains(new Edge(puntoAbajo, puntoAbajoDerecha)) &&
+           conexiones.contains(new Edge((new Point(fila,columna)), puntoAbajo)) &&
+           conexiones.contains(new Edge(puntoDerecha, puntoAbajoDerecha))){
+            return true; 
+    } else{
+        return false;
+    }
+
+
+
+  
+    // Verificar si todas las conexiones necesarias existen
+    /*return conexiones.contains(new Edge(puntoArriba, puntoArribaIzquierda)) &&
+           conexiones.contains(new Edge(puntoArriba, puntoArribaDerecha)) &&
+           conexiones.contains(new Edge(puntoArribaIzquierda, puntoIzquierda)) &&
+           conexiones.contains(new Edge(puntoArribaDerecha, puntoDerecha)) &&
+           conexiones.contains(new Edge(puntoIzquierda, puntoAbajoIzquierda)) &&
+           conexiones.contains(new Edge(puntoAbajoIzquierda, puntoAbajo)) &&
+           conexiones.contains(new Edge(puntoAbajo, puntoAbajoDerecha)) &&
+           conexiones.contains(new Edge(puntoAbajoDerecha, puntoDerecha)) &&
+           conexiones.contains(new Edge(puntoDerecha, puntoArribaDerecha));*/
+}
+
+
+        /*private void imprimirPuntosSeleccionados() {
+            System.out.println("Puntos seleccionados:");
+            for (Point punto : puntosSeleccionados) {
+                System.out.println("Fila: " + punto.x + ", Columna: " + punto.y);
+            }
+        }*/
+        
+
+        
         
     }
 }
@@ -260,7 +358,29 @@ class Point {
     }
 }
 
+class Edge {
+    Point punto1;
+    Point punto2;
 
+    Edge(Point punto1, Point punto2) {
+        this.punto1 = punto1;
+        this.punto2 = punto2;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Edge edge = (Edge) o;
+        return (punto1.equals(edge.punto1) && punto2.equals(edge.punto2)) ||
+               (punto1.equals(edge.punto2) && punto2.equals(edge.punto1));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(punto1, punto2);
+    }
+}
 
 
 
