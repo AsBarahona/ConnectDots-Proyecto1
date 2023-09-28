@@ -21,7 +21,6 @@ public class Server {
     private static final int MAX_CLIENTS = 4; // Número máximo de clientes permitidos
     private static int numjugador = 1; // Contador para asignar el número de jugador de cada cliente 
     private static int turnoActual = 0;
-    private static Set<Point> puntosSeleccionados = new HashSet<>(); //Controla los puntos continuos de las jugadas
     private static Set<Edge> conexiones = new HashSet<>();
 
     public static void main(String[] args) {
@@ -106,7 +105,7 @@ public class Server {
                                             primY = columna2;
                                         }
                                         conexiones.add(new Edge(new Point(fila1, primY), new Point(fila1, secY)));
-                                        if (verificarCuadrado(fila1, columna1)) {
+                                        if (verificarCuadrado(fila1, primY, fila1, secY)) {
                                         JsonObject lineaJSON = new JsonObject();
                                         lineaJSON.addProperty("accion", "dibujarLinea");
                                         lineaJSON.addProperty("fila1", fila1);
@@ -140,7 +139,7 @@ public class Server {
                                             primX = fila2;
                                         }
                                         conexiones.add(new Edge(new Point(primX, columna1), new Point(secX, columna1)));
-                                        if (verificarCuadrado(fila1, columna1)) {
+                                        if (verificarCuadrado(primX, columna1, secX,columna2)){
                                             JsonObject lineaJSON = new JsonObject();
                                         lineaJSON.addProperty("accion", "dibujarLinea");
                                         lineaJSON.addProperty("fila1", fila1);
@@ -210,128 +209,54 @@ public class Server {
             return false;
         }
 
-        /*private boolean verificarCuadrado(int fila1, int columna1, int fila2, int columna2) {
-            // Ordena las coordenadas para asegurarse de que fila1 <= fila2 y columna1 <= columna2
-            if (fila1 == fila2){ //Horizontal 
-                int filaDA = fila1+1;
-                int filaIA = fila2+1;
-                int columnaDA = columna1;
-                int columnaIA = columna2;
 
-                Point punto1 = new Point(filaDA, columnaDA);
-                Point punto2 = new Point(filaIA, columnaIA);
+        private boolean verificarCuadrado(int fila, int columna, int fila2, int columna2) {
+            // Verificar si se forma un cuadrado alrededor del punto dado (fila, columna)
 
-                int filaDAr = fila1-1;
-                int filaIAr = fila2-1;
-                int columnaDAr = columna1;
-                int columnaIAr = columna2;
+            Point puntoArriba = new Point(fila - 1, columna);
+            //Point puntoArribaIzquierda = new Point(fila - 1, columna - 1);
+            Point puntoArribaDerecha = new Point(fila - 1, columna + 1);
+            Point puntoAbajo = new Point(fila + 1, columna);
+            Point puntoAbajoIzquierda = new Point(fila + 1, columna - 1);
+            Point puntoAbajoDerecha = new Point(fila + 1, columna + 1);
+            Point puntoIzquierda = new Point(fila, columna - 1);
 
-                Point punto3 = new Point(filaDAr, columnaDAr);
-                Point punto4 = new Point(filaIAr, columnaIAr);
 
-                if (puntosSeleccionados.contains(punto1) && puntosSeleccionados.contains(punto2)){
+            Point puntoDerecha = new Point(fila, columna + 1);
+
+            if(fila==fila2){
+                if(conexiones.contains(new Edge((new Point(fila,columna)),(new Point(fila2,columna2)))) &&
+                conexiones.contains(new Edge(puntoAbajo, puntoAbajoDerecha)) &&
+                conexiones.contains(new Edge(new Point(fila2,columna2), puntoAbajoDerecha)) &&
+                conexiones.contains(new Edge((new Point(fila,columna)), puntoAbajo))){
                     return true; 
+                } else if(conexiones.contains(new Edge((new Point(fila,columna)),(new Point(fila2,columna2)))) &&
+                conexiones.contains(new Edge(puntoArriba, puntoArribaDerecha)) &&
+                conexiones.contains(new Edge(puntoArriba,(new Point(fila,columna)))) &&
+                conexiones.contains(new Edge(puntoArribaDerecha, (new Point(fila2,columna2))))){
+                    return true;
+                } else{
+                    return false;
                 }
-                else if (puntosSeleccionados.contains(punto3) && puntosSeleccionados.contains(punto4)){
+            }else if (columna==columna2){
+                if (conexiones.contains(new Edge((new Point(fila,columna)),(new Point(fila2,columna2)))) &&
+                conexiones.contains(new Edge(puntoIzquierda, puntoAbajoIzquierda)) &&
+                conexiones.contains(new Edge(puntoIzquierda, (new Point(fila,columna)))) &&
+                conexiones.contains(new Edge(puntoAbajoIzquierda, (new Point(fila2,columna2))))) {
                     return true; 
+                } else if(conexiones.contains(new Edge((new Point(fila,columna)),(new Point(fila2,columna2)))) &&
+                conexiones.contains(new Edge(puntoDerecha, puntoAbajoDerecha)) &&
+                conexiones.contains(new Edge((new Point(fila,columna)), puntoDerecha)) &&
+                conexiones.contains(new Edge((new Point(fila2,columna2)), puntoAbajoDerecha))){
+                    return true;
+                } else{
+                    return false;
+                
                 }
+            } else{
+                return false; 
             }
-            else { //Vertical 
-                int filaD1 = fila1;
-                int filaD2 = fila2;
-                int columnaD1= columna1+1;
-                int columnaD2 = columna2+1; 
-
-                Point punto5 = new Point(filaD1, columnaD1);
-                Point punto6 = new Point(filaD2, columnaD2);
-
-                int filaI1 = fila1;
-                int filaI2 = fila2;
-                int columnaI1= columna1-1;
-                int columnaI2 = columna2-1;
-
-                Point punto7 = new Point(filaI1, columnaI1);
-                Point punto8 = new Point(filaI2, columnaI2);
-
-                if (puntosSeleccionados.contains(punto5) && puntosSeleccionados.contains(punto6)){
-                    return true; 
-                }
-                else if (puntosSeleccionados.contains(punto7) && puntosSeleccionados.contains(punto8)){
-                    return true; 
-                }
-            }
-            return false;
-            
-        }*/
-
-private boolean verificarCuadrado(int fila, int columna) {
-    // Verificar si se forma un cuadrado alrededor del punto dado (fila, columna)
-
-    // Verificar hacia arriba
-    Point puntoArriba = new Point(fila - 1, columna);
-    Point puntoArribaIzquierda = new Point(fila - 1, columna - 1);
-    Point puntoArribaDerecha = new Point(fila - 1, columna + 1);
-
-    // Verificar hacia abajo
-    Point puntoAbajo = new Point(fila + 1, columna);
-    Point puntoAbajoIzquierda = new Point(fila + 1, columna - 1);
-    Point puntoAbajoDerecha = new Point(fila + 1, columna + 1);
-
-    // Verificar hacia la izquierda
-    Point puntoIzquierda = new Point(fila, columna - 1);
-
-    // Verificar hacia la derecha
-    Point puntoDerecha = new Point(fila, columna + 1);
-    if (conexiones.contains(new Edge(puntoArribaIzquierda,puntoArriba)) &&
-           conexiones.contains(new Edge(puntoIzquierda, (new Point(fila,columna)))) &&
-           conexiones.contains(new Edge(puntoArriba, (new Point(fila,columna)))) &&
-           conexiones.contains(new Edge(puntoArribaIzquierda, puntoIzquierda))) {
-            return true; 
-    }else if(conexiones.contains(new Edge(puntoArriba,puntoArribaDerecha)) &&
-           conexiones.contains(new Edge((new Point(fila,columna)), puntoDerecha)) &&
-           conexiones.contains(new Edge(puntoArriba, (new Point(fila,columna)))) &&
-           conexiones.contains(new Edge(puntoArribaDerecha, puntoDerecha))){
-            return true; 
-    }else if(conexiones.contains(new Edge(puntoIzquierda,(new Point(fila,columna)))) &&
-           conexiones.contains(new Edge(puntoAbajoIzquierda, puntoAbajo)) &&
-           conexiones.contains(new Edge(puntoIzquierda, puntoAbajoIzquierda)) &&
-           conexiones.contains(new Edge((new Point(fila,columna)), puntoAbajo))){
-            return true; 
-    }else if(conexiones.contains(new Edge((new Point(fila,columna)),puntoDerecha)) &&
-           conexiones.contains(new Edge(puntoAbajo, puntoAbajoDerecha)) &&
-           conexiones.contains(new Edge((new Point(fila,columna)), puntoAbajo)) &&
-           conexiones.contains(new Edge(puntoDerecha, puntoAbajoDerecha))){
-            return true; 
-    } else{
-        return false;
-    }
-
-
-
-  
-    // Verificar si todas las conexiones necesarias existen
-    /*return conexiones.contains(new Edge(puntoArriba, puntoArribaIzquierda)) &&
-           conexiones.contains(new Edge(puntoArriba, puntoArribaDerecha)) &&
-           conexiones.contains(new Edge(puntoArribaIzquierda, puntoIzquierda)) &&
-           conexiones.contains(new Edge(puntoArribaDerecha, puntoDerecha)) &&
-           conexiones.contains(new Edge(puntoIzquierda, puntoAbajoIzquierda)) &&
-           conexiones.contains(new Edge(puntoAbajoIzquierda, puntoAbajo)) &&
-           conexiones.contains(new Edge(puntoAbajo, puntoAbajoDerecha)) &&
-           conexiones.contains(new Edge(puntoAbajoDerecha, puntoDerecha)) &&
-           conexiones.contains(new Edge(puntoDerecha, puntoArribaDerecha));*/
-}
-
-
-        /*private void imprimirPuntosSeleccionados() {
-            System.out.println("Puntos seleccionados:");
-            for (Point punto : puntosSeleccionados) {
-                System.out.println("Fila: " + punto.x + ", Columna: " + punto.y);
-            }
-        }*/
-        
-
-        
-        
+        }
     }
 }
 
@@ -381,108 +306,3 @@ class Edge {
         return Objects.hash(punto1, punto2);
     }
 }
-
-
-
-
-
-
-
-
-
-
-/*import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.Queue;
-import java.util.LinkedList;
-import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-public class Server {
-    private static Queue<String> usuariosEnCola = new LinkedList<>();
-    private static Queue<PrintWriter> clientesQueue = new LinkedList<>();
-
-    public static void main(String[] args) {
-        ServerSocket serverSocket = null; // Declarar aquí para poder cerrarlo en el finally
-        try {
-            serverSocket = new ServerSocket(12345); // Port
-            ExecutorService pool = Executors.newFixedThreadPool(10);
-
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                pool.execute(new ClientHandler(clientSocket));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (serverSocket != null) {
-                try {
-                    serverSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private static class ClientHandler implements Runnable {
-        private Socket socket;
-        private PrintWriter out;
-        private String nombreUsuario;
-
-        public ClientHandler(Socket socket) {
-            this.socket = socket;
-        }
-
-        @Override
-        public void run() {
-            try {
-                try (Scanner in = new Scanner(socket.getInputStream())) {
-                    out = new PrintWriter(socket.getOutputStream(), true);
-
-                    nombreUsuario = in.nextLine();
-                    clientesQueue.add(out);
-                    usuariosEnCola.add(nombreUsuario);
-
-                    broadcast(nombreUsuario + " se ha unido al juego.");
-
-                    // Imprimir la lista de usuarios en la cola
-                    printUserQueue();
-
-                    while (true) {
-                        String message = in.nextLine();
-                        broadcast(nombreUsuario + ": " + message);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (nombreUsuario != null) {
-                    clientesQueue.remove(out);
-                    usuariosEnCola.remove(nombreUsuario);
-                    broadcast(nombreUsuario + " abandonó el juego.");
-
-                    // Imprimir la lista de usuarios en la cola
-                    printUserQueue();
-                }
-            }
-        }
-
-        private void broadcast(String message) {
-            for (PrintWriter client : clientesQueue) {
-                client.println(message);
-            }
-        }
-
-        // Método para imprimir la lista de usuarios en la cola
-        private void printUserQueue() {
-            System.out.println("Lista de usuarios en cola:");
-            for (String usuario : usuariosEnCola) {
-                System.out.println(usuario);
-            }
-        }
-    }
-}*/
